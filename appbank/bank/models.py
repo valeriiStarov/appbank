@@ -119,6 +119,3 @@ class Transfer(models.Model):
 
         return transf
 
-
-class New_model(models.Model):
-    pass
