@@ -120,5 +120,40 @@ class Transfer(models.Model):
         return transf
 
 
-class New_model():
-    pass
+class Deposit(models.Model):
+    date = models.DateTimeField(auto_now_add=True)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
+
+    def __str__(self) -> str:
+        return f'[{self.pk}] Account number {self.account.pk} put {str(self.amount)} on a deposit'
+
+    @classmethod
+    def make_deposit(cls, amount, account):
+        """Making deposit logic"""
+        if amount < 0:
+            raise(ValueError("Amount can't be negative"))
+        if amount > account.balance:
+            raise(ValueError("Not enough money"))
+        
+        account.balance -= amount
+        account.save()
+        
+        dep = cls.objects.create(amount=amount, account=account)
+
+        return dep
+
+    @staticmethod
+    def update_deposit(instance, amount, account):
+        """Making withdraw from deposit logic"""
+        if amount < 0:
+            raise(ValueError("Amount can't be negative"))
+        if amount > instance.amount:
+            raise(ValueError("Not enough money"))
+
+        with transaction.atomic():
+            account.balance += amount
+            instance.amount -= amount
+
+            account.save()
+            instance.save()
