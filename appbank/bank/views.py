@@ -164,3 +164,69 @@ class TransferViewSet(mixins.CreateModelMixin,
             status=status.HTTP_201_CREATED, 
             headers=headers)
 
+
+class DepositViewSet(mixins.CreateModelMixin,
+                     mixins.RetrieveModelMixin,
+                     mixins.UpdateModelMixin,
+                     mixins.DestroyModelMixin,
+                     mixins.ListModelMixin,
+                     viewsets.GenericViewSet):
+    queryset = Deposit.objects.all()
+    serializer_class = DepositSerializer
+    permission_classes = (IsAuthenticated, )
+    authentication_classes = (TokenAuthentication,)
+
+    def get_queryset(self):
+        return self.queryset.filter(account=Account.objects.get(user=self.request.user)).order_by('-id')
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            Deposit.make_deposit(**serializer.validated_data, account=Account.objects.get(user=self.request.user))
+        except Exception as e:
+            content = {"error": str(e)}
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        headers = self.get_success_headers(serializer.data)
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED,
+            headers=headers
+        )
+
+    def update(self, request, *args, **kwargs):
+        """Making withdraw from deposit"""
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            Deposit.update_deposit(instance=instance, **serializer.validated_data, account=Account.objects.get(user=self.request.user))
+        except Exception as e:
+            content = {"error": str(e)}
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+        
+        headers = self.get_success_headers(serializer.data)
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+            headers=headers
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        """Destroy deposit and transfer of balance to account"""
+        instance = self.get_object()
+        account = Account.objects.get(user=self.request.user)
+
+        if instance.amount > 0:
+            account.balance += instance.amount
+            account.save()
+        
+        self.perform_destroy(instance)
+        return Response(
+            status=status.HTTP_204_NO_CONTENT
+        )

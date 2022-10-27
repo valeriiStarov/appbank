@@ -41,3 +41,11 @@ class TransferSerializer(serializers.ModelSerializer):
         model = Transfer
         fields = ('id', 'from_account', 'to_account', 'amount', 'date')
         read_only_fields = ('id', 'date', 'from_account')
+
+    
+class DepositSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Deposit
+        fields = ('id', 'date', 'amount', 'account')
+        read_only_fields = ('id', 'date', 'account')

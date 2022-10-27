@@ -11,6 +11,7 @@ router.register(r'profile', ProfileViewSet)
 router.register(r'action', ActionViewSet)
 router.register(r'transaction', TransactionViewSet)
 router.register(r'transfer', TransferViewSet)
+router.register(r'deposit', DepositViewSet)
 urlpatterns = [
     path('', include(router.urls)),
 ]
