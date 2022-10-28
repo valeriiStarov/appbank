@@ -11,5 +11,6 @@ def make_interest():
             amount = float(deposit.amount)
             interest = amount * pr
             amount += interest
+            print('1', amount)
             deposit.amount = amount
             deposit.save()
