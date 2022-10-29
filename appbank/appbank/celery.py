@@ -12,6 +12,6 @@ app.autodiscover_tasks()
 app.conf.beat_schedule = {
     'call_make_interest_every_1_minute': {
         'task': 'bank.tasks.call_make_interest',
-        'schedule': crontab(minute='*/1'),
+        'schedule': crontab(minute='*/5'),
     }
 }
