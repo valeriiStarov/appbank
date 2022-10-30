@@ -136,10 +136,10 @@ class Deposit(models.Model):
         if amount > account.balance:
             raise(ValueError("Not enough money"))
         
-        account.balance -= amount
-        account.save()
-        
-        dep = cls.objects.create(amount=amount, account=account)
+        with transaction.atomic():
+            account.balance -= amount
+            account.save()
+            dep = cls.objects.create(amount=amount, account=account)
 
         return dep
 
@@ -157,3 +157,47 @@ class Deposit(models.Model):
 
             account.save()
             instance.save()
+
+
+class Credit(models.Model):
+    date = models.DateTimeField(auto_now_add=True)
+    total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
+
+    def __str__(self) -> str:
+        return f'[{self.pk}] Account number {self.account.pk} borrow {str(self.amount)}'
+
+    @classmethod
+    def make_credit(cls, amount, account):
+        """Making credit logic"""
+        if amount < 0:
+            raise(ValueError("Amount can't be negative"))
+        if amount > account.balance * 100:
+            raise(ValueError("Reduce your credit amount"))
+        
+        credit_amount = amount + amount/10
+
+        with transaction.atomic():
+            account.balance += amount
+            account.save()
+            cre = cls.objects.create(amount=credit_amount,total_amount=credit_amount, account=account)
+
+        return cre
+
+    @staticmethod
+    def update_credit(instance, amount, account):
+        """Partial repayment of a credit"""
+        if amount < 0:
+            raise(ValueError("Amount can't be negative"))
+        if amount > instance.amount:
+            raise(ValueError("The amount entered is greater than the credit amount"))
+
+        with transaction.atomic():
+            account.balance -= amount
+            instance.amount -= amount
+
+            account.save()
+            instance.save()
+
+    
