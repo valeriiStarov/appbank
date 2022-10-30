@@ -49,3 +49,11 @@ class DepositSerializer(serializers.ModelSerializer):
         model = Deposit
         fields = ('id', 'date', 'amount', 'account')
         read_only_fields = ('id', 'date', 'account')
+
+
+class CreditSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Credit
+        fields = ('id', 'date', 'total_amount', 'amount', 'account')
+        read_only_fields = ('id', 'date', 'account', 'total_amount')

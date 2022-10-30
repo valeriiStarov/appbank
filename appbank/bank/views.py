@@ -165,12 +165,7 @@ class TransferViewSet(mixins.CreateModelMixin,
             headers=headers)
 
 
-class DepositViewSet(mixins.CreateModelMixin,
-                     mixins.RetrieveModelMixin,
-                     mixins.UpdateModelMixin,
-                     mixins.DestroyModelMixin,
-                     mixins.ListModelMixin,
-                     viewsets.GenericViewSet):
+class DepositViewSet(viewsets.ModelViewSet):
     queryset = Deposit.objects.all()
     serializer_class = DepositSerializer
     permission_classes = (IsAuthenticated, )
@@ -226,6 +221,71 @@ class DepositViewSet(mixins.CreateModelMixin,
             account.balance += instance.amount
             account.save()
         
+        self.perform_destroy(instance)
+        return Response(
+            status=status.HTTP_204_NO_CONTENT
+        )
+
+
+class CreditViewSet(viewsets.ModelViewSet):
+    queryset = Credit.objects.all()
+    serializer_class = CreditSerializer
+    permission_classes = (IsAuthenticated, )
+    authentication_classes = (TokenAuthentication,)
+
+    def get_queryset(self):
+        return self.queryset.filter(account=Account.objects.get(user=self.request.user)).order_by('-id')
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            Credit.make_credit(**serializer.validated_data, account=Account.objects.get(user=self.request.user))
+        except Exception as e:
+            content = {"error": str(e)}
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        headers = self.get_success_headers(serializer.data)
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED,
+            headers=headers
+        )
+
+    def update(self, request, *args, **kwargs):
+        """Partial repayment of a credit"""
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            Credit.update_credit(instance=instance, **serializer.validated_data, account=Account.objects.get(user=self.request.user))
+        except Exception as e:
+            content = {"error": str(e)}
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+        
+        headers = self.get_success_headers(serializer.data)
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+            headers=headers
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        """Close a credit without debt"""
+        instance = self.get_object()
+        account = Account.objects.get(user=self.request.user)
+
+        try:
+            if instance.amount > 0:
+                raise(ValueError("You need to pay off the credit in full first"))
+        except Exception as e:
+            content = {"error": str(e)}
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            
         self.perform_destroy(instance)
         return Response(
             status=status.HTTP_204_NO_CONTENT
