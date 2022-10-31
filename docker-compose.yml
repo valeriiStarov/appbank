@@ -2,26 +2,40 @@ version: '3.8'
 services:
     web:
         build: .
+        restart: always
         command: python3 manage.py runserver 0.0.0.0:8000
         volumes:
             - .:/code 
         ports:
-            - '0.0.0.0:8000:8000'
+            - '8000:8000'
+    redis:
+        image: redis
+        restart: always
+        container_name: 'appbank_redis'
+        command: docker run -d -p 6379:6379 redis
+        ports:
+        - '6379:6379'
 
     celery:
         build: .
+        container_name: 'appbank_celery_worker'
         command: celery -A appbank worker -l info
         volumes:
         - .:/code
-        depends_on:
-        - db
+        links:
         - redis
-
+        depends_on:
+        - web
+        - redis
+    
     celery-beat:
         build: .
+        container_name: 'appbank_celery_beat'
         command: celery -A appbank beat -l info
         volumes:
         - .:/code
+        links:
+        - redis
         depends_on:
-        - db
+        - web
         - redis

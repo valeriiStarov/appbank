@@ -17,7 +17,7 @@ def make_interest():
 def credit_payment():
     credits = Credit.objects.all()
     for credit in credits:
-        payment = float(credit.total_amount)/2
+        payment = float(credit.total_amount)/10
         account = credit.account
 
         if credit.amount > 0:
