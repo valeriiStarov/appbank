@@ -8,13 +8,11 @@ services:
             - .:/code 
         ports:
             - '8000:8000'
+        depends_on:
+            - redis
+            
     redis:
-        image: redis
-        restart: always
-        container_name: 'appbank_redis'
-        command: docker run -d -p 6379:6379 redis
-        ports:
-        - '6379:6379'
+        image: 'redis'
 
     celery:
         build: .
@@ -22,10 +20,10 @@ services:
         command: celery -A appbank worker -l info
         volumes:
         - .:/code
-        links:
-        - redis
         depends_on:
+        - redis
         - web
+        links:
         - redis
     
     celery-beat:
@@ -34,8 +32,8 @@ services:
         command: celery -A appbank beat -l info
         volumes:
         - .:/code
-        links:
-        - redis
         depends_on:
+        - redis
         - web
+        links:
         - redis

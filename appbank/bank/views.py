@@ -69,16 +69,19 @@ class ActionViewSet(mixins.CreateModelMixin,
                    viewsets.GenericViewSet):
     queryset = Action.objects.all().order_by('-id')
     serializer_class = ActionSerializer
-    permission_classes = (IsAdminUser,)
+    permission_classes = (IsAuthenticated,)
     authentication_classes = (TokenAuthentication,)
     pagination_class = ActionViewSetPagination
+
+    def get_queryset(self):
+        return self.queryset.filter(account=Account.objects.get(user=self.request.user)).order_by('-id')
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         try:
-            Action.make_action(**serializer.validated_data)
+            Action.make_action(**serializer.validated_data, account=Account.objects.get(user=self.request.user))
         except Exception as e:
             content = {"error": str(e)}
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
