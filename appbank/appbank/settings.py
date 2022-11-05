@@ -12,7 +12,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-ygo_1-k8c5s7!ov6@u)6#gv_+c)62w)mq)k!^wyq$sfv=b%uz-'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'TRUE') == 'TRUE'
 
 ALLOWED_HOSTS = ['*']
 
@@ -79,12 +79,12 @@ WSGI_APPLICATION = 'appbank.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'bank_db',
-        'USER': 'bank_user',
-        'PASSWORD': 'bank_pass',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'ENGINE': os.getenv('SQL_ENGINE', 'django.db.backends.sqlite3'),
+        'NAME': os.getenv('SQL_DATABASE', os.path.join(BASE_DIR, 'db.sqlite3')),
+        'USER': os.getenv('SQL_USER', 'user'),
+        'PASSWORD': os.getenv('SQL_PASSWORD', 'password'),
+        'HOST': os.getenv('SQL_HOST', 'localhost'),
+        'PORT': os.getenv('SQL_PORT', '5432'),
     }
 }
 
@@ -144,11 +144,11 @@ REST_FRAMEWORK = {
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-REDIS_LOCAL_HOST = '0.0.0.0'
 REDIS_HOST = 'redis'
 REDIS_PORT = '6379'
 
 # I use this for my local checking
+REDIS_LOCAL_HOST = '0.0.0.0'
 # REDIS_HOST = REDIS_LOCAL_HOST
 
 CELERY_BROKER_URL = 'redis://' + REDIS_HOST + ':' + REDIS_PORT

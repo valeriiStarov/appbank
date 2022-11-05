@@ -10,7 +10,8 @@ services:
             - '8000:8000'
         depends_on:
             - redis
-            
+        env_file: .env
+
     redis:
         image: 'redis'
 
@@ -25,6 +26,7 @@ services:
         - web
         links:
         - redis
+        env_file: .env
     
     celery-beat:
         build: .
@@ -37,3 +39,17 @@ services:
         - web
         links:
         - redis
+        env_file: .env
+    
+    db:
+        image: postgres:14.0-alpine
+
+        volumes:
+        - postgres_data:/var/lib/postgresql/data/
+        environment:
+        - POSTGRES_USER=bank_user
+        - POSTGRES_PASSWORD=bank_pass
+        - POSTGRES_DB=bank_db
+
+volumes:
+  postgres_data:
