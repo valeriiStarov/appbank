@@ -6,6 +6,7 @@ from django.db.models.signals import post_save
 
 
 class Account(models.Model):
+    """User's account for checking balance"""
     balance = models.DecimalField(
         default=0,
         max_digits=12,
@@ -24,6 +25,7 @@ def create_user_account(sender, instance, created, **kwargs):
         Account.objects.create(user=instance)
 
 class Profile(models.Model):
+    """User's customizable profile"""
     first_name = models.CharField(max_length=255, blank=True)
     last_name = models.CharField(max_length=255, blank=True)
     image = models.ImageField(upload_to = 'photos/%Y/%m/%d', null=True)
@@ -41,6 +43,7 @@ def create_user_profile(sender, instance, created, **kwargs):
 
 
 class Action(models.Model):
+    """Model for puting money into the account or for withdrawing money"""
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     date = models.DateTimeField(auto_now_add=True)
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
@@ -63,6 +66,7 @@ class Action(models.Model):
 
 
 class Transaction(models.Model):
+    """Transaction between customer and some merchant"""
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     date = models.DateTimeField(auto_now_add=True)
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
@@ -88,6 +92,7 @@ class Transaction(models.Model):
         return tran
 
 class Transfer(models.Model):
+    """Transfer between different customers"""
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     date = models.DateTimeField(auto_now_add=True)
     from_account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='from_account')
@@ -121,6 +126,7 @@ class Transfer(models.Model):
 
 
 class Deposit(models.Model):
+    """Deposit some money to taking more money after time"""
     date = models.DateTimeField(auto_now_add=True)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
@@ -160,6 +166,7 @@ class Deposit(models.Model):
 
 
 class Credit(models.Model):
+    """Take some money to add them on account balance"""
     date = models.DateTimeField(auto_now_add=True)
     total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
